@@ -1,4 +1,4 @@
-package com.example.wewatch.search
+package com.example.wewatch.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +9,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
+import com.example.wewatch.adapter.SearchAdapter
 import com.example.wewatch.model.Item
+import com.example.wewatch.search.SearchAdapterListener
+import com.example.wewatch.search.SearchPresenter
+import com.example.wewatch.search.SearchView
 
 class SearchActivity : AppCompatActivity(), SearchView, SearchAdapterListener {
 

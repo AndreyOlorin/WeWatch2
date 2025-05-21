@@ -1,4 +1,4 @@
-package com.example.wewatch.search
+package com.example.wewatch.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
 import com.example.wewatch.model.Item
+import com.example.wewatch.search.SearchAdapterListener
 import com.squareup.picasso.Picasso
 
 class SearchAdapter(

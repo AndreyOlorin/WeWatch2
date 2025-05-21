@@ -1,4 +1,4 @@
-package com.example.wewatch.main_activity
+package com.example.wewatch.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
+import com.example.wewatch.main_activity.MainAdapterListener
 import com.example.wewatch.model.Movie
 import com.squareup.picasso.Picasso
 

@@ -1,4 +1,4 @@
-package com.example.wewatch.add
+package com.example.wewatch.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -10,6 +10,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.wewatch.R
+import com.example.wewatch.add.AddPresenter
+import com.example.wewatch.add.AddView
 import com.example.wewatch.model.MovieDB
 import com.squareup.picasso.Picasso
 

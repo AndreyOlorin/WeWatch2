@@ -1,4 +1,4 @@
-package com.example.wewatch.main_activity
+package com.example.wewatch.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,9 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
+import com.example.wewatch.adapter.MainAdapter
 import com.example.wewatch.model.Movie
 import com.example.wewatch.model.MovieDB
-import com.example.wewatch.add.AddActivity
+import com.example.wewatch.main_activity.MainAdapterListener
+import com.example.wewatch.main_activity.MainPresenter
+import com.example.wewatch.main_activity.MainView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity(), MainView, MainAdapterListener {
