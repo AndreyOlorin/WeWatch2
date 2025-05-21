@@ -8,16 +8,17 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.example.wewatch.R
-import com.example.wewatch.add.AddPresenter
-import com.example.wewatch.add.AddView
-import com.example.wewatch.model.MovieDB
+import com.example.wewatch.viewModel.AddViewModel
 import com.squareup.picasso.Picasso
 
-class AddActivity : AppCompatActivity(), AddView {
+class AddActivity : AppCompatActivity() {
 
-    private lateinit var presenter: AddPresenter
+    private val addViewModel: AddViewModel by viewModels()
+
     private lateinit var titleEditText: EditText
     private lateinit var releaseDateEditText: EditText
     private lateinit var movieImageView: ImageView
@@ -26,58 +27,77 @@ class AddActivity : AppCompatActivity(), AddView {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add)
 
-        val dataBase = MovieDB.getDb(this)
-        presenter = AddPresenter(this, dataBase)
-
         titleEditText = findViewById(R.id.movie_title)
         val searchBtn = findViewById<ImageButton>(R.id.search_btn)
         val addBtn = findViewById<Button>(R.id.add_movie)
         releaseDateEditText = findViewById(R.id.movie_release_date)
         movieImageView = findViewById(R.id.movie_imageview)
 
+        addViewModel.title.observe(this, Observer {
+            titleEditText.setText(it)
+        })
+
+        addViewModel.releaseDate.observe(this, Observer {
+            releaseDateEditText.setText(it)
+        })
+
+        addViewModel.moviePosterPath.observe(this, Observer {
+            movieImageView.tag = it
+            if (it.isNotEmpty()) {
+                Picasso.get().load(it).into(movieImageView)
+            }
+        })
+
+        addViewModel.allMovies.observe(this, Observer { movies ->
+            Toast.makeText(this, "Список фильмов обновлен", Toast.LENGTH_SHORT).show()
+        })
+
         searchBtn.setOnClickListener {
             if (titleEditText.text.isEmpty()) {
-                Toast.makeText(this, "Название фильма не может быть пустым!", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Название фильма не может быть пустым",
+                    Toast.LENGTH_LONG
+                ).show()
             } else {
                 val title = titleEditText.text.toString()
-                presenter.searchMovie(title)
+                val intent = Intent(this@AddActivity, SearchActivity::class.java)
+                intent.putExtra(SearchActivity.SEARCH_QUERY, title)
+                startActivityForResult(intent, SEARCH_ACTIVITY_REQUEST_CODE)
             }
         }
 
         addBtn.setOnClickListener {
-            val title = titleEditText.text.toString()
-            val releaseDate = releaseDateEditText.text.toString()
-            val posterPath = (movieImageView.tag as? String)?.takeIf { it.isNotEmpty() }
-            presenter.addMovie(title, releaseDate, posterPath ?: "")
-        }
-    }
+            val title = titleEditText.text.toString().trim()
+            val releaseDate = releaseDateEditText.text.toString().trim()
+            val posterPath = movieImageView.tag?.toString().orEmpty()
 
-    override fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
+            if (title.isEmpty() || releaseDate.isEmpty()) {
+                Toast.makeText(
+                    this,
+                    "Поля не могут быть пустыми",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                addViewModel.title.value = title
+                addViewModel.releaseDate.value = releaseDate
+                addViewModel.moviePosterPath.value = posterPath
 
-    override fun showMovieAdded() {
-        setResult(Activity.RESULT_OK)
-        finish()
-    }
-
-    override fun setMovieDetails(title: String, releaseDate: String, posterPath: String) {
-        titleEditText.setText(title)
-        releaseDateEditText.setText(releaseDate)
-        movieImageView.tag = posterPath
-
-        if (posterPath.isEmpty()) {
-            movieImageView.setImageResource(R.drawable.no_image)
-        } else {
-            Picasso.get().load(posterPath).into(movieImageView)
+                addViewModel.addMovie()
+                Toast.makeText(this, "Фильм успешно добавлен", Toast.LENGTH_SHORT).show()
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == SEARCH_ACTIVITY_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            presenter.handleSearchResult(data)
+        this@AddActivity.runOnUiThread {
+            addViewModel.title.value = data?.getStringExtra(SearchActivity.EXTRA_TITLE)
+            addViewModel.releaseDate.value = data?.getStringExtra(SearchActivity.EXTRA_RELEASE_DATE)
+            addViewModel.moviePosterPath.value = data?.getStringExtra(SearchActivity.EXTRA_POSTER_PATH)
         }
     }
 
