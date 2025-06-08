@@ -5,24 +5,24 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
 import com.example.wewatch.adapter.SearchAdapter
-import com.example.wewatch.model.Item
-import com.example.wewatch.search.SearchAdapterListener
-import com.example.wewatch.search.SearchPresenter
-import com.example.wewatch.search.SearchView
+import com.example.wewatch.viewModel.SearchViewModel
 
-class SearchActivity : AppCompatActivity(), SearchView, SearchAdapterListener {
+class SearchActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: SearchAdapter
     private lateinit var noMoviesTextView: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var presenter: SearchPresenter
     private var query = ""
+
+    private val searchViewModel: SearchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,52 +33,47 @@ class SearchActivity : AppCompatActivity(), SearchView, SearchAdapterListener {
         noMoviesTextView = findViewById(R.id.no_movies_textview)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val intent = intent
-        query = intent.getStringExtra(SEARCH_QUERY) ?: ""
+        val i = intent
+        query = i.getStringExtra(SEARCH_QUERY) ?: ""
 
-        // Инициализация презентера
-        presenter = SearchPresenter(this)
-
-        presenter.searchMovies(query)
-    }
-
-    // Реализуем методы из SearchView
-    override fun showSearchResults(items: List<Item>) {
-        noMoviesTextView.visibility = View.INVISIBLE
-        recyclerView.visibility = View.VISIBLE
-        adapter = SearchAdapter(items, this@SearchActivity, this@SearchActivity)
+        adapter = SearchAdapter(this, itemListener)
         recyclerView.adapter = adapter
-        progressBar.visibility = View.INVISIBLE
+
+        searchViewModel.loading.observe(this, Observer { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.INVISIBLE
+        })
+
+        searchViewModel.error.observe(this, Observer { errorMessage ->
+            if (errorMessage != null) {
+                noMoviesTextView.visibility = View.VISIBLE
+                noMoviesTextView.text = errorMessage
+            }
+        })
+
+        searchViewModel.items.observe(this, Observer { items ->
+            if (items?.isNotEmpty() == true) {
+                noMoviesTextView.visibility = View.INVISIBLE
+                recyclerView.visibility = View.VISIBLE
+                adapter.updateData(items)
+            } else {
+                recyclerView.visibility = View.INVISIBLE
+                noMoviesTextView.visibility = View.VISIBLE
+            }
+        })
+
+        searchViewModel.fetchMovies(query)
     }
 
-    override fun showError(message: String) {
-        progressBar.visibility = View.INVISIBLE
-        noMoviesTextView.visibility = View.VISIBLE
-        noMoviesTextView.text = message
-    }
-
-    override fun showLoading() {
-        progressBar.visibility = View.VISIBLE
-        recyclerView.visibility = View.INVISIBLE
-        noMoviesTextView.visibility = View.INVISIBLE
-    }
-
-    override fun showEmptyState() {
-        progressBar.visibility = View.INVISIBLE
-        recyclerView.visibility = View.INVISIBLE
-        noMoviesTextView.visibility = View.VISIBLE
-        noMoviesTextView.text = "Нет фильмов для данного поиска"
-    }
-
-    // Реализуем метод из SearchAdapterListener
-    override fun onItemClick(view: View, position: Int) {
-        val movie = adapter.getItemAtPosition(position)
-        val replyIntent = Intent()
-        replyIntent.putExtra(EXTRA_TITLE, movie.title)
-        replyIntent.putExtra(EXTRA_RELEASE_DATE, movie.getReleaseYearFromDate().toString())
-        replyIntent.putExtra(EXTRA_POSTER_PATH, movie.posterPath)
-        setResult(RESULT_OK, replyIntent)
-        finish()
+    private var itemListener: SearchAdapter.RecyclerItemListener = object : SearchAdapter.RecyclerItemListener {
+        override fun onItemClick(view: View, position: Int) {
+            val movie = adapter.getItemAtPosition(position)
+            val replyIntent = Intent()
+            replyIntent.putExtra(EXTRA_TITLE, movie.title)
+            replyIntent.putExtra(EXTRA_RELEASE_DATE, movie.getReleaseYearFromDate().toString())
+            replyIntent.putExtra(EXTRA_POSTER_PATH, movie.posterPath)
+            setResult(RESULT_OK, replyIntent)
+            finish()
+        }
     }
 
     companion object {
