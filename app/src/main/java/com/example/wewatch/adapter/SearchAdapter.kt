@@ -9,14 +9,19 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wewatch.R
 import com.example.wewatch.model.Item
-import com.example.wewatch.search.SearchAdapterListener
 import com.squareup.picasso.Picasso
 
 class SearchAdapter(
-    private var list: List<Item>,
-    private val listener: SearchAdapterListener,
-    private val context: Context
+    private val context: Context,
+    private val listener: RecyclerItemListener
 ) : RecyclerView.Adapter<SearchAdapter.SearchHolder>() {
+
+    private var list: List<Item> = emptyList()
+
+    fun updateData(newList: List<Item>) {
+        list = newList
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchHolder {
         val view = LayoutInflater.from(context).inflate(R.layout.item_movie_detal, parent, false)
@@ -29,7 +34,6 @@ class SearchAdapter(
 
     override fun onBindViewHolder(holder: SearchHolder, position: Int) {
         val item = list[position]
-
         holder.titleTextView.text = item.title
         holder.releaseDateTextView.text = item.releaseDate
         holder.overviewTextView.text = item.overview
@@ -59,5 +63,8 @@ class SearchAdapter(
             }
         }
     }
-}
 
+    interface RecyclerItemListener {
+        fun onItemClick(v: View, position: Int)
+    }
+}
